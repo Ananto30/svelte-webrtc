@@ -20,7 +20,8 @@
 		]
 	};
 
-	const serverUrl = 'http://localhost:3000/api'; // Replace with your actual server URL
+	const serverUrl = 'https://vercel-webrtc.vercel.app/api';
+	// const serverUrl = 'http://localhost:3000/api';
 
 	onMount(() => {
 		const hash = window.location.hash.substring(1);
