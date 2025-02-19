@@ -331,94 +331,102 @@
 	});
 </script>
 
-<div class="min-h-screen bg-gray-900 p-4 text-gray-200">
-	<div class="mx-auto w-full max-w-7xl space-y-6">
-		<div class="flex flex-col justify-between gap-4 md:flex-row md:items-start">
-			<!-- join -->
-			<div class="w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-lg">
-				<div class="flex items-center justify-between gap-4">
-					<input
-						type="text"
-						placeholder="Enter your name"
-						bind:value={client_id}
-						class="w-full rounded-md bg-gray-700 p-2 text-white focus:ring-2 focus:ring-sky-500 focus:outline-none"
-						required
-						on:keydown={(e) => e.key === 'Enter' && joinRoom()}
-					/>
-					<button
-						on:click={joinRoom}
-						class="w-40 cursor-pointer rounded-md bg-sky-700 py-2 transition hover:bg-sky-600"
-					>
-						Join Room
-					</button>
+{#if isMobile()}
+	<div class="min-h-screen bg-gray-900 p-4 text-gray-200">
+		This app does not work on mobile devices yet. Please use a desktop browser.
+	</div>
+{:else}
+	<div class="min-h-screen bg-gray-900 p-4 text-gray-200">
+		<div class="mx-auto w-full max-w-7xl space-y-6">
+			<div class="flex flex-col justify-between gap-4 md:flex-row md:items-start">
+				<!-- join -->
+				<div class="w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-lg">
+					<div class="flex items-center justify-between gap-4">
+						<input
+							type="text"
+							placeholder="Enter your name"
+							bind:value={client_id}
+							class="w-full rounded-md bg-gray-700 p-2 text-white focus:ring-2 focus:ring-sky-500 focus:outline-none"
+							required
+							on:keydown={(e) => e.key === 'Enter' && joinRoom()}
+						/>
+						<button
+							on:click={joinRoom}
+							class="w-40 cursor-pointer rounded-md bg-sky-700 py-2 transition hover:bg-sky-600"
+						>
+							Join Room
+						</button>
+					</div>
+					{#if error}
+						<p transition:slide class="mt-2 text-red-400">{error}</p>
+					{/if}
 				</div>
-				{#if error}
-					<p transition:slide class="mt-2 text-red-400">{error}</p>
-				{/if}
+
+				<!-- share -->
+				<div class="rounded-lg bg-gray-800 p-4 px-6 shadow-lg">
+					<div class="flex items-center justify-center gap-4">
+						<p class="text-center text-gray-300">
+							Room ID:
+							<span class="font-semibold text-sky-500">
+								{room_id}
+							</span>
+						</p>
+						<button
+							on:click={copyToClipboard}
+							class="cursor-pointer rounded-md bg-green-800 px-2 py-1 transition ease-in-out hover:bg-green-700"
+						>
+							Copy Link
+						</button>
+						<button
+							on:click={generateNewRoom}
+							class="cursor-pointer rounded-md bg-violet-700 px-2 py-1 transition ease-in-out hover:bg-violet-600"
+						>
+							New Room
+						</button>
+					</div>
+					{#if copyMessage}
+						<p transition:slide class="mt-1 text-center text-sm text-green-400">{copyMessage}</p>
+					{/if}
+				</div>
 			</div>
 
-			<!-- share -->
-			<div class="rounded-lg bg-gray-800 p-4 px-6 shadow-lg">
-				<div class="flex items-center justify-center gap-4">
-					<p class="text-center text-gray-300">
-						Room ID:
-						<span class="font-semibold text-sky-500">
-							{room_id}
-						</span>
-					</p>
-					<button
-						on:click={copyToClipboard}
-						class="cursor-pointer rounded-md bg-green-800 px-2 py-1 transition ease-in-out hover:bg-green-700"
-					>
-						Copy Link
-					</button>
-					<button
-						on:click={generateNewRoom}
-						class="cursor-pointer rounded-md bg-violet-700 px-2 py-1 transition ease-in-out hover:bg-violet-600"
-					>
-						New Room
-					</button>
-				</div>
-				{#if copyMessage}
-					<p transition:slide class="mt-1 text-center text-sm text-green-400">{copyMessage}</p>
-				{/if}
-			</div>
-		</div>
-
-		<div class="w-full rounded-lg bg-gray-800 p-4 text-center font-medium text-gray-300 shadow-lg">
-			📢 → {message}
-		</div>
-
-		{#if isMobile() && localVideo && remoteVideo}
-			<button
-				on:click={startVideos}
+			<div
 				class="w-full rounded-lg bg-gray-800 p-4 text-center font-medium text-gray-300 shadow-lg"
 			>
-				Click here to start video
-			</button>
-		{/if}
-
-		<!-- Video Container -->
-		<div class="flex flex-col items-center gap-4 md:flex-row">
-			<div class="relative h-64 w-full md:h-96 md:w-1/2">
-				<video
-					bind:this={localVideo}
-					muted
-					class="h-full w-full rounded-lg bg-gray-800 object-cover shadow-lg"
-				>
-				</video>
-				<div class="bg-opacity-50 absolute bottom-2 left-2 rounded bg-black px-2 py-1 text-white">
-					Me
-				</div>
+				📢 → {message}
 			</div>
-			<div class="relative h-64 w-full md:h-96 md:w-1/2">
-				<video
-					bind:this={remoteVideo}
-					class="h-full w-full rounded-lg bg-gray-800 object-cover shadow-lg"
+
+			{#if isMobile() && localVideo && remoteVideo}
+				<button
+					on:click={startVideos}
+					class="w-full rounded-lg bg-gray-800 p-4 text-center font-medium text-gray-300 shadow-lg"
 				>
-					<track kind="captions" />
-				</video>
+					Click here to start video
+				</button>
+			{/if}
+
+			<!-- Video Container -->
+			<div class="flex flex-col items-center gap-4 md:flex-row">
+				<div class="relative h-64 w-full md:h-96 md:w-1/2">
+					<video
+						bind:this={localVideo}
+						muted
+						class="h-full w-full rounded-lg bg-gray-800 object-cover shadow-lg"
+					>
+					</video>
+					<div class="bg-opacity-50 absolute bottom-2 left-2 rounded bg-black px-2 py-1 text-white">
+						Me
+					</div>
+				</div>
+				<div class="relative h-64 w-full md:h-96 md:w-1/2">
+					<video
+						bind:this={remoteVideo}
+						class="h-full w-full rounded-lg bg-gray-800 object-cover shadow-lg"
+					>
+						<track kind="captions" />
+					</video>
+				</div>
 			</div>
 		</div>
 	</div>
-</div>
+{/if}
