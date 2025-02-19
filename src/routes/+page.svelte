@@ -171,17 +171,19 @@
 					sampleRate: 44100
 				},
 				video: {
-					width: { ideal: 1280 },
-					height: { ideal: 720 }
+					width: { ideal: 1280, max: 1920 },
+					height: { ideal: 720, max: 1080 },
+					facingMode: 'user' // Use 'user' for front camera, 'environment' for back camera
 				}
 			})
 			.then((stream) => {
 				// Initialize RTCPeerConnection before adding tracks
 				pc = new RTCPeerConnection(configuration);
 
-				// Display your local video in #localVideo element
-				localVideo.srcObject = stream;
-				localVideo.play();
+				// // Display your local video in #localVideo element
+				// localVideo.srcObject = stream;
+				// localVideo.play();
+
 				// Add your stream to be sent to the connecting peer
 				stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
@@ -236,8 +238,8 @@
 				};
 			})
 			.catch((error) => {
-				console.error('Error accessing media devices.', error);
-				message = 'Without camera permission video session cannot be started.';
+				message =
+					'Error accessing media devices. Without camera permission video session cannot be started.';
 				// Set the video elements' background color to black if no stream is available
 				localVideo.style.backgroundColor = 'black';
 				remoteVideo.style.backgroundColor = 'black';
@@ -258,12 +260,9 @@
 			fetch(`${serverUrl}/events?room_id=${room_id}`)
 				.then((response) => response.json())
 				.then((messages) => {
-					console.log('Polling messages:', messages);
-					console.log('My events:', myEvents);
 					messages.events.forEach((message: any) => {
 						if (message.sdp) {
 							if (myEvents.some((event) => event.sdp?.type === message.sdp.type)) {
-								console.log('Ignoring duplicate event');
 								return;
 							}
 
@@ -285,7 +284,6 @@
 							if (
 								myEvents.some((event) => event.candidate?.candidate === message.candidate.candidate)
 							) {
-								console.log('Ignoring duplicate event');
 								return;
 							}
 
