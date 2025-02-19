@@ -34,7 +34,16 @@
 			room_id = Math.random().toString(36).substr(2, 9);
 			window.location.hash = room_id;
 		}
+
+		// Retrieve client_id from local storage
+		client_id = localStorage.getItem('client_id') || '';
 	});
+
+	function isMobile() {
+		return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+			navigator.userAgent
+		);
+	}
 
 	function joinRoom() {
 		if (!room_id) {
@@ -45,6 +54,9 @@
 			error = 'Name is required';
 			return;
 		}
+
+		// Save client_id to local storage
+		localStorage.setItem('client_id', client_id);
 
 		error = '';
 		message = 'Joining room...';
@@ -311,6 +323,21 @@
 		window.location.hash = room_id;
 	}
 
+	function startLocalVideo() {
+		navigator.mediaDevices
+			.getUserMedia({
+				audio: true,
+				video: true
+			})
+			.then((stream) => {
+				localVideo.srcObject = stream;
+				localVideo.play();
+			})
+			.catch((error) => {
+				message = 'Error accessing media devices.';
+			});
+	}
+
 	onDestroy(() => {
 		leaveRoom();
 	});
@@ -369,6 +396,21 @@
 				{/if}
 			</div>
 		</div>
+
+		{#if isMobile()}
+			<div
+				class="w-full rounded-lg bg-gray-800 p-4 text-center font-medium text-gray-300 shadow-lg"
+			>
+				<button
+					on:click={startLocalVideo}
+					class="cursor-pointer rounded-md bg-sky-700 px-2 py-1 transition ease-in-out hover:bg-sky-600"
+				>
+					Enable Camera
+				</button>
+				<p class="mt-2">Enable camera to start video call</p>
+			</div>
+		{/if}
+
 		<div class="w-full rounded-lg bg-gray-800 p-4 text-center font-medium text-gray-300 shadow-lg">
 			📢 → {message}
 		</div>
