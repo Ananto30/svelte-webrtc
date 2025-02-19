@@ -85,10 +85,12 @@
 				if (!isOfferer) {
 					message = 'Wait for other person to connect';
 				} else {
-					message = 'Other person has joined. Connecting...';
+					message = 'Other person is already here. Connecting...';
 				}
 				startWebRTC(isOfferer);
 				startPolling();
+
+				startLocalVideo();
 			})
 			.catch((error) => {
 				console.error('Error joining room:', error);
@@ -397,23 +399,10 @@
 			</div>
 		</div>
 
-		{#if isMobile()}
-			<div
-				class="w-full rounded-lg bg-gray-800 p-4 text-center font-medium text-gray-300 shadow-lg"
-			>
-				<button
-					on:click={startLocalVideo}
-					class="cursor-pointer rounded-md bg-sky-700 px-2 py-1 transition ease-in-out hover:bg-sky-600"
-				>
-					Enable Camera
-				</button>
-				<p class="mt-2">Enable camera to start video call</p>
-			</div>
-		{/if}
-
 		<div class="w-full rounded-lg bg-gray-800 p-4 text-center font-medium text-gray-300 shadow-lg">
 			📢 → {message}
 		</div>
+
 		<!-- Video Container -->
 		<div class="flex flex-col items-center gap-4 md:flex-row">
 			<div class="relative h-64 w-full md:h-96 md:w-1/2">
