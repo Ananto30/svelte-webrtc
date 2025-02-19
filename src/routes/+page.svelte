@@ -6,6 +6,9 @@
 	let remoteVideo: HTMLVideoElement;
 	let pollingInterval: number;
 	let pc: RTCPeerConnection;
+	let iceCandidates: Array<{ candidate: RTCIceCandidateInit }> = [];
+	let iceCandidateRequestInitiated = false;
+	let myEvents: any[] = [];
 
 	let client_id: string;
 	let room_id: string;
@@ -44,6 +47,7 @@
 		}
 
 		error = '';
+		message = 'Joining room...';
 
 		fetch(`${serverUrl}/join`, {
 			method: 'POST',
@@ -74,7 +78,10 @@
 				startWebRTC(isOfferer);
 				startPolling();
 			})
-			.catch((error) => console.error('Error joining room:', error));
+			.catch((error) => {
+				console.error('Error joining room:', error);
+				message = 'Error joining room. Please try again.';
+			});
 	}
 
 	function leaveRoom() {
@@ -116,14 +123,29 @@
 	}
 
 	// Send signaling data via HTTP
-	function sendMessage(message: any) {
+	function sendMessages(messages: any[]) {
 		fetch(`${serverUrl}/event`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
 			},
-			body: JSON.stringify({ room_id: room_id, message })
-		}).catch((error) => console.error('Error sending message:', error));
+			body: JSON.stringify({ room_id: room_id, messages })
+		}).catch((error) => console.error('Error sending messages:', error));
+	}
+
+	function gatherAndSendIceCandidates() {
+		if (iceCandidates.length > 0 && !iceCandidateRequestInitiated) {
+			iceCandidateRequestInitiated = true;
+			setTimeout(() => {
+				sendMessages(iceCandidates);
+				iceCandidates = [];
+				iceCandidateRequestInitiated = false;
+			}, 2000);
+		}
+	}
+
+	function addToMyEvents(event: any) {
+		myEvents.push(JSON.parse(JSON.stringify(event)));
 	}
 
 	function startWebRTC(isOfferer: boolean) {
@@ -152,8 +174,12 @@
 				// 'onicecandidate' notifies us whenever an ICE agent needs to deliver a
 				// message to the other peer through the signaling server
 				pc.onicecandidate = (event) => {
+					// when there are onicecandidate events, they come as bunches, so we can gather them and send them together to reduce http requests
 					if (event.candidate) {
-						sendMessage({ candidate: event.candidate });
+						// sendMessage({ candidate: event.candidate });
+						iceCandidates.push({ candidate: event.candidate });
+						addToMyEvents({ candidate: event.candidate });
+						gatherAndSendIceCandidates();
 					}
 				};
 
@@ -206,7 +232,10 @@
 
 	function localDescCreated(desc: RTCSessionDescriptionInit) {
 		pc.setLocalDescription(desc)
-			.then(() => sendMessage({ sdp: pc.localDescription }))
+			.then(() => {
+				sendMessages([{ sdp: pc.localDescription }]);
+				addToMyEvents({ sdp: pc.localDescription });
+			})
 			.catch(onError);
 	}
 
@@ -215,19 +244,37 @@
 			fetch(`${serverUrl}/events?room_id=${room_id}`)
 				.then((response) => response.json())
 				.then((messages) => {
-					console.log(messages);
+					console.log('Polling messages:', messages);
+					console.log('My events:', myEvents);
 					messages.events.forEach((message: any) => {
 						if (message.sdp) {
+							if (myEvents.some((event) => event.sdp?.type === message.sdp.type)) {
+								console.log('Ignoring duplicate event');
+								return;
+							}
+
 							// This is called after receiving an offer or answer from another peer
-							pc.setRemoteDescription(new RTCSessionDescription(message.sdp))
-								.then(() => {
-									// When receiving an offer lets answer it
-									if (pc.remoteDescription?.type === 'offer') {
-										pc.createAnswer().then(localDescCreated).catch(onError);
-									}
-								})
-								.catch(onError);
+							const remoteDesc = new RTCSessionDescription(message.sdp);
+							if (pc.signalingState === 'stable' || pc.signalingState === 'have-local-offer') {
+								pc.setRemoteDescription(remoteDesc)
+									.then(() => {
+										// When receiving an offer lets answer it
+										if (remoteDesc.type === 'offer') {
+											pc.createAnswer().then(localDescCreated).catch(onError);
+										}
+									})
+									.catch(onError);
+							} else {
+								console.warn('Cannot set remote description in state:', pc.signalingState);
+							}
 						} else if (message.candidate) {
+							if (
+								myEvents.some((event) => event.candidate?.candidate === message.candidate.candidate)
+							) {
+								console.log('Ignoring duplicate event');
+								return;
+							}
+
 							// Add the new ICE candidate to our connections remote description
 							pc.addIceCandidate(new RTCIceCandidate(message.candidate))
 								.then(onSuccess)
@@ -259,6 +306,11 @@
 			});
 	}
 
+	function generateNewRoom() {
+		room_id = Math.random().toString(36).substr(2, 9);
+		window.location.hash = room_id;
+	}
+
 	onDestroy(() => {
 		leaveRoom();
 	});
@@ -276,6 +328,7 @@
 						bind:value={client_id}
 						class="w-full rounded-md bg-gray-700 p-2 text-white focus:ring-2 focus:ring-sky-500 focus:outline-none"
 						required
+						on:keydown={(e) => e.key === 'Enter' && joinRoom()}
 					/>
 					<button
 						on:click={joinRoom}
@@ -303,6 +356,12 @@
 						class="cursor-pointer rounded-md bg-green-800 px-2 py-1 transition ease-in-out hover:bg-green-700"
 					>
 						Copy Link
+					</button>
+					<button
+						on:click={generateNewRoom}
+						class="cursor-pointer rounded-md bg-violet-700 px-2 py-1 transition ease-in-out hover:bg-violet-600"
+					>
+						New Room
 					</button>
 				</div>
 				{#if copyMessage}
