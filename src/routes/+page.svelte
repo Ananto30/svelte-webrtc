@@ -89,8 +89,6 @@
 				}
 				startWebRTC(isOfferer);
 				startPolling();
-
-				startLocalVideo();
 			})
 			.catch((error) => {
 				console.error('Error joining room:', error);
@@ -180,9 +178,9 @@
 				// Initialize RTCPeerConnection before adding tracks
 				pc = new RTCPeerConnection(configuration);
 
-				// // Display your local video in #localVideo element
-				// localVideo.srcObject = stream;
-				// localVideo.play();
+				// Display your local video in #localVideo element
+				localVideo.srcObject = stream;
+				localVideo.play();
 
 				// Add your stream to be sent to the connecting peer
 				stream.getTracks().forEach((track) => pc.addTrack(track, stream));
@@ -323,19 +321,9 @@
 		window.location.hash = room_id;
 	}
 
-	function startLocalVideo() {
-		navigator.mediaDevices
-			.getUserMedia({
-				audio: true,
-				video: true
-			})
-			.then((stream) => {
-				localVideo.srcObject = stream;
-				localVideo.play();
-			})
-			.catch((error) => {
-				message = 'Error accessing media devices.';
-			});
+	function startVideos() {
+		localVideo.play();
+		remoteVideo.play();
 	}
 
 	onDestroy(() => {
@@ -400,6 +388,15 @@
 		<div class="w-full rounded-lg bg-gray-800 p-4 text-center font-medium text-gray-300 shadow-lg">
 			📢 → {message}
 		</div>
+
+		{#if isMobile() && localVideo && remoteVideo}
+			<button
+				on:click={startVideos}
+				class="w-full rounded-lg bg-gray-800 p-4 text-center font-medium text-gray-300 shadow-lg"
+			>
+				Click here to start video
+			</button>
+		{/if}
 
 		<!-- Video Container -->
 		<div class="flex flex-col items-center gap-4 md:flex-row">
