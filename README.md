@@ -1,38 +1,48 @@
-# sv
+# Svelte WebRTC
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A modern WebRTC application built with Svelte.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- Real-time video and audio communication
+- Easy to use interface
+- Cross-browser compatibility
+- Lightweight and fast
 
-```bash
-# create a new project in the current directory
-npx sv create
+## Installation
 
-# create a new project in my-app
-npx sv create my-app
-```
+1. Clone the repository:
+    ```sh
+    git clone https://github.com/yourusername/svelte-webrtc.git
+    cd svelte-webrtc
+    ```
 
-## Developing
+2. Install dependencies:
+    ```sh
+    npm install
+    ```
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+3. Run the application:
+    ```sh
+    npm run dev
+    ```
 
-```bash
-npm run dev
+## Usage
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+1. Open your browser and navigate to `http://localhost:5000`.
+2. Allow access to your camera and microphone.
+3. Share the generated link with a friend to start a WebRTC session.
 
-## Building
+## Contributing
 
-To create a production version of your app:
+Contributions are welcome! Please open an issue or submit a pull request.
 
-```bash
-npm run build
-```
+## License
 
-You can preview the production build with `npm run preview`.
+This project is licensed under the MIT License.
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## Acknowledgements
+
+- [Svelte](https://svelte.dev/)
+- [WebRTC](https://webrtc.org/)
+

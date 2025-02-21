@@ -9,6 +9,7 @@
 	let iceCandidates: Array<{ candidate: RTCIceCandidateInit }> = [];
 	let iceCandidateRequestInitiated = false;
 	let myEvents: any[] = [];
+	let isJoined = false;
 
 	let client_id: string;
 	let room_id: string;
@@ -54,6 +55,9 @@
 			error = 'Name is required';
 			return;
 		}
+		if (isJoined) {
+			return;
+		}
 
 		// Save client_id to local storage
 		localStorage.setItem('client_id', client_id);
@@ -89,6 +93,7 @@
 				}
 				startWebRTC(isOfferer);
 				startPolling();
+				isJoined = true;
 			})
 			.catch((error) => {
 				console.error('Error joining room:', error);
@@ -317,6 +322,9 @@
 	}
 
 	function generateNewRoom() {
+		if (isJoined) {
+			return;
+		}
 		room_id = Math.random().toString(36).substr(2, 9);
 		window.location.hash = room_id;
 	}
@@ -336,92 +344,103 @@
 		This app does not work on mobile devices yet. Please use a desktop browser.
 	</div>
 {:else}
-	<div class="min-h-screen bg-gray-900 p-4 text-gray-200">
-		<div class="mx-auto w-full max-w-7xl space-y-6">
-			<div class="flex flex-col justify-between gap-4 md:flex-row md:items-start">
-				<!-- join -->
-				<div class="w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-lg">
-					<div class="flex items-center justify-between gap-4">
+	<div class="min-h-screen bg-gray-900 p-6 text-gray-200">
+		<div class="mx-auto w-full max-w-7xl space-y-8">
+			<div class="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+				<!-- Join Section -->
+				<div class="w-full max-w-md rounded-xl bg-gray-800 p-6 shadow-md">
+					<h2 class="mb-3 text-lg font-semibold text-gray-100">Join room as</h2>
+					<div class="flex items-center gap-4">
 						<input
 							type="text"
 							placeholder="Enter your name"
 							bind:value={client_id}
-							class="w-full rounded-md bg-gray-700 p-2 text-white focus:ring-2 focus:ring-sky-500 focus:outline-none"
+							class="w-full rounded-lg bg-gray-700 p-3 text-white focus:ring-2 focus:ring-sky-500 focus:outline-none
+							{isJoined ? 'cursor-not-allowed bg-gray-600' : ''}"
 							required
-							on:keydown={(e) => e.key === 'Enter' && joinRoom()}
+							disabled={isJoined}
+							on:keydown={(e) => !isJoined && e.key === 'Enter' && joinRoom()}
 						/>
 						<button
 							on:click={joinRoom}
-							class="w-40 cursor-pointer rounded-md bg-sky-700 py-2 transition hover:bg-sky-600"
+							disabled={isJoined}
+							class="rounded-lg px-4 py-2 font-medium transition
+							{isJoined
+								? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600'
+								: 'cursor-pointer  bg-sky-700 hover:bg-sky-600'}"
 						>
-							Join Room
+							Join
 						</button>
 					</div>
 					{#if error}
-						<p transition:slide class="mt-2 text-red-400">{error}</p>
+						<p class="mt-3 text-sm text-red-400">{error}</p>
 					{/if}
 				</div>
 
-				<!-- share -->
-				<div class="rounded-lg bg-gray-800 p-4 px-6 shadow-lg">
-					<div class="flex items-center justify-center gap-4">
-						<p class="text-center text-gray-300">
-							Room ID:
-							<span class="font-semibold text-sky-500">
-								{room_id}
-							</span>
+				<!-- Share Section -->
+				<div class="w-full max-w-md rounded-xl bg-gray-800 p-6 shadow-md">
+					<h2 class="mb-3 text-lg font-semibold text-gray-100">Room Info</h2>
+					<div class="flex items-center justify-between gap-4">
+						<p class="text-gray-300">
+							Room ID: <span class="font-semibold text-sky-500">{room_id}</span>
 						</p>
-						<button
-							on:click={copyToClipboard}
-							class="cursor-pointer rounded-md bg-green-800 px-2 py-1 transition ease-in-out hover:bg-green-700"
-						>
-							Copy Link
-						</button>
-						<button
-							on:click={generateNewRoom}
-							class="cursor-pointer rounded-md bg-violet-700 px-2 py-1 transition ease-in-out hover:bg-violet-600"
-						>
-							New Room
-						</button>
+						<div class="flex gap-2">
+							<button
+								on:click={copyToClipboard}
+								class="cursor-pointer rounded-lg bg-green-700 px-3 py-1 text-sm font-medium transition hover:bg-green-600"
+							>
+								Copy Link
+							</button>
+							<button
+								on:click={generateNewRoom}
+								class="rounded-lg px-3 py-1 text-sm font-medium transition
+								{isJoined
+									? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600'
+									: 'cursor-pointer bg-violet-700 hover:bg-violet-600'}"
+								disabled={isJoined}
+							>
+								New Room
+							</button>
+						</div>
 					</div>
 					{#if copyMessage}
-						<p transition:slide class="mt-1 text-center text-sm text-green-400">{copyMessage}</p>
+						<p transition:slide class="mt-2 text-sm text-green-400">{copyMessage}</p>
 					{/if}
 				</div>
 			</div>
 
+			<!-- Message Display -->
 			<div
-				class="w-full rounded-lg bg-gray-800 p-4 text-center font-medium text-gray-300 shadow-lg"
+				class="w-full rounded-lg bg-gray-800 p-4 text-center text-lg font-medium text-gray-300 shadow-md"
 			>
-				📢 → {message}
+				📢 {message}
 			</div>
 
 			{#if isMobile() && localVideo && remoteVideo}
 				<button
 					on:click={startVideos}
-					class="w-full rounded-lg bg-gray-800 p-4 text-center font-medium text-gray-300 shadow-lg"
+					class="w-full cursor-pointer rounded-lg bg-gray-800 p-4 text-center font-medium text-gray-300 shadow-md"
 				>
 					Click here to start video
 				</button>
 			{/if}
 
 			<!-- Video Container -->
-			<div class="flex flex-col items-center gap-4 md:flex-row">
-				<div class="relative h-64 w-full md:h-96 md:w-1/2">
+			<div class="flex flex-col items-center gap-6 md:flex-row">
+				<div class="relative w-full md:w-1/2">
 					<video
 						bind:this={localVideo}
 						muted
-						class="h-full w-full rounded-lg bg-gray-800 object-cover shadow-lg"
-					>
-					</video>
-					<div class="bg-opacity-50 absolute bottom-2 left-2 rounded bg-black px-2 py-1 text-white">
+						class="h-64 w-full rounded-lg bg-gray-800 object-cover shadow-md md:h-96"
+					></video>
+					<div class="bg-opacity-50 absolute bottom-2 left-2 rounded bg-black px-3 py-1 text-white">
 						Me
 					</div>
 				</div>
-				<div class="relative h-64 w-full md:h-96 md:w-1/2">
+				<div class="relative w-full md:w-1/2">
 					<video
 						bind:this={remoteVideo}
-						class="h-full w-full rounded-lg bg-gray-800 object-cover shadow-lg"
+						class="h-64 w-full rounded-lg bg-gray-800 object-cover shadow-md md:h-96"
 					>
 						<track kind="captions" />
 					</video>
